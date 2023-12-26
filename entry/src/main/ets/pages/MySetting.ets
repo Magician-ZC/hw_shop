@@ -1,25 +1,16 @@
 /**
  * 我的设置页面
  */
-import CommonConstants from './CommonConstants'
+import CommonConstants from '../commons/CommonConstants'
 import router from '@ohos.router'
-import DataModel from './DataModel'
-import ItemData from './ItemData'
+import DataModel from '../model/DataModel'
+import ItemData from '../model/ItemData'
 
 
-@Entry
 @Component
-struct MySetting{
+export struct MySetting{
 
-  @State
-  account: string = ""
-
-  onPageShow(){
-    let acc = router.getParams() as Record<string,string>
-    if(acc){
-      this.account = acc['sendMsg']
-    }
-  }
+  account: string;
 
   @Builder
   settingCell(item: ItemData){
@@ -52,21 +43,6 @@ struct MySetting{
   build(){
     Scroll(){
       Column({space: CommonConstants.COMMON_SPACE}){
-        Column(){//创建一个内嵌的列布局
-          Text($r('app.string.mainPage_tabTitles_mine'))
-            .fontWeight(FontWeight.Medium)
-            .fontSize($r('app.float.page_title_text_size'))
-            .margin({
-              top:$r('app.float.mainPage_tabTitles_margin')
-            })
-            .padding({
-              left:$r('app.float.mainPage_tabTitles_padding')
-            })
-        }
-        .width(CommonConstants.FULL_PARENT)
-        .alignItems(HorizontalAlign.Start)
-
-
         //账户信息
         Row(){
           Image($r('app.media.account'))
@@ -103,7 +79,6 @@ struct MySetting{
         }
         .backgroundColor(Color.White)
         .width(CommonConstants.FULL_PARENT)
-        .height(CommonConstants.SET_LIST_WIDTH)
         .divider({
           strokeWidth:$r('app.float.setting_list_strokeWidth'),
           color:Color.Gray,
@@ -123,7 +98,35 @@ struct MySetting{
           .fontColor($r('app.color.setting_button_fontColor'))
           .fontWeight(FontWeight.Medium)
           .backgroundColor($r('app.color.setting_button_backgroundColor'))
-          .margin({bottom:$r('app.float.setting_button_bottom')})
+          .margin({bottom:$r('app.float.setting_size')})
+          .onClick(()=>{
+            AlertDialog.show({
+              title:"提示",
+              message:"退出该账号？",
+              autoCancel:true,
+              alignment:DialogAlignment.Center,
+              primaryButton:{
+                value:'取消',
+                action:()=>{
+
+                }
+              },
+              secondaryButton:{
+                value:'确认',
+                fontColor:$r('app.color.setting_button_fontColor'),
+                action:()=>{
+                  //页面跳转
+                  router.replaceUrl({
+                    url: "pages/Login",
+                    params:{
+                      sendMsg:this.account
+                    }
+                  })
+                }
+              }
+
+            })
+          })
       }
       .height(CommonConstants.FULL_PARENT)
     }

@@ -1,5 +1,5 @@
 
-import CommonConstants from './CommonConstants'
+import CommonConstants from '../commons/CommonConstants'
 import prompt from '@ohos.prompt'
 import Prompt from '@system.prompt'
 import router from '@ohos.router'
@@ -21,6 +21,14 @@ struct Index {
 
   private timeOutId:number = -1 //控制登录超时时间的变量
 
+
+  onPageShow(){
+    let acc = router.getParams() as Record<string,string>
+    if(acc){
+      this.account = acc['sendMsg']
+    }
+  }
+
   login(): void{
     if(this.account === '' || this.password===''){
       Prompt.showToast({ //开启一个确认的提示
@@ -37,7 +45,7 @@ struct Index {
           this.timeOutId = -1
           //页面跳转
           router.replaceUrl({
-            url: "pages/MySetting",
+            url: "pages/Index",
             params:{
               sendMsg:this.account
             }
@@ -91,7 +99,7 @@ struct Index {
         })
 
       //账号输入框
-      TextInput({ placeholder:$r('app.string.account') })
+      TextInput({ placeholder:$r('app.string.account'),text:this.account!=null?this.account:null })
         .inputStyle()
         .maxLength(CommonConstants.INPUT_ACCOUNT_LENGTH)
         .type(InputType.Number)

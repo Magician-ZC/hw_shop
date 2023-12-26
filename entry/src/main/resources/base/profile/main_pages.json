@@ -1,6 +1,6 @@
 {
   "src": [
     "pages/Login",
-    "pages/MySetting"
+    "pages/Index"
   ]
 }
