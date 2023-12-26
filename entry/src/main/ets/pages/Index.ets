@@ -4,6 +4,7 @@ import CommonConstants from '../commons/CommonConstants';
 import Home from './Home';
 import { MySetting } from './MySetting';
 
+
 @Entry
 @Component
 struct Index{
@@ -64,7 +65,9 @@ struct Index{
       })
       .backgroundColor($r('app.color.mainPage_backgroundColor'))
       .tabBar(this.TabBuilder(CommonConstants.MINE_TITLE,CommonConstants.MINE_TAB_INDEX,$r('app.media.mine_selected'),$r('app.media.mine_normal')))
-
     }
+    .onChange((index:number)=>{
+      this.currentIndex = index
+    })
   }
 }

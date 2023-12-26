@@ -5,19 +5,44 @@ import CommonConstants from '../commons/CommonConstants'
 import router from '@ohos.router'
 import DataModel from '../model/DataModel'
 import ItemData from '../model/ItemData'
+import { PicData } from '../model/PicData'
+import promptAction from '@ohos.promptAction'
+import SearchResult from '../model/SearchResult'
+import http from '@ohos.net.http'
+import hilog from '@ohos.hilog'
 
+let dataSource = new PicData()
 
 @Component
 export default struct Home{
 
+  @State pageNo: number = 0
+  total: number = 0
+  @State running: boolean = true
+  @State columnsTemplate: string = '1fr 1fr'
+  @State imageHeight: string = '20%'
+
+
   private swiperController: SwiperController = new SwiperController();
 
+  private scrollerMain: Scroller = new Scroller();
+  private scrollerWaterFlow: Scroller = new Scroller();
 
+  @Builder
+  loadDataFooter() {
+    LoadingProgress()
+      .width(px2vp(150))
+      .height(px2vp(150))
+      .color(Color.Orange)
+  }
+
+  aboutToAppear(){
+    this.requestData()
+  }
 
   build(){
-    Scroll(){
+    Scroll(this.scrollerMain){
       Column({space: CommonConstants.COMMON_SPACE}){
-
         //轮播图片
         Swiper(this.swiperController){
           ForEach(DataModel.getSwiperImages(),(item:Resource)=>{
@@ -92,8 +117,89 @@ export default struct Home{
         .margin({
           bottom:$r('app.float.home_secondGrid_margin')
         })
+        Stack(){
+          WaterFlow({scroller:this.scrollerWaterFlow}) {
+            LazyForEach(dataSource, item => {
+              FlowItem() {
+                Column({ space: 10 }) {
+                  Image(item.coverUrl).objectFit(ImageFit.Cover)
+                    .width('100%')
+                    .height(this.imageHeight)
+                  Text(item.title)
+                    .fontSize(px2fp(50))
+                    .fontColor(Color.Black)
+                    .width('100%')
+                }.onClick(() => {
+                  router.pushUrl({ url: 'custompages/waterflow/Detail', params: item })
+                })
+              }
+            }, item => item)
+          }
+          .columnsTemplate(this.columnsTemplate)
+          .columnsGap(5)
+          .rowsGap(5)
+          .onReachStart(() => {
+            this.scrollerWaterFlow = this.scrollerMain
+          })
+          .onReachEnd(() => {
+            if (!this.running) {
+              if ((this.pageNo + 1) * 15 < this.total) {
+                this.pageNo++
+                this.running = true
+
+                setTimeout(() => {
+                  this.requestData()
+                }, 2000)
+              }
+            }
+
+          })
+          .width('100%')
+          .height('100%')
+          .layoutDirection(FlexDirection.Column)
+
+          if (this.running) {
+            this.loadDataFooter()
+          }
+        }
+
       }
     }
     .height(CommonConstants.FULL_PARENT)
+  }
+
+  requestData() {
+    let url = `https://api.apiopen.top/api/getHaoKanVideo?page=${this.pageNo}&size=15`
+    let httpRequest = http.createHttp()
+    httpRequest.request(
+      url,
+      {
+        method: http.RequestMethod.GET,
+        header: {
+          "User-Agent": "Mozilla/5.0 (Linux; Android 8.0.0; SM-G955U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+      },(err,data)=>{
+      if(!err){
+        let searchResult: SearchResult = JSON.parse(data.result as string)
+
+        if (searchResult) {
+          this.total = searchResult.result.total
+          searchResult.result.list.forEach(ItemModel => {
+            dataSource.addData(ItemModel)
+          })
+          this.running = false
+        }
+      }else{
+        console.log(JSON.stringify(err)+"123123213");
+        hilog.info(0xFF00, "testTag", JSON.stringify(err));
+        promptAction.showToast({
+          message: '网络异常: ' + JSON.stringify(err),
+          duration: 2000
+        })
+
+        httpRequest.destroy();
+      }
+    });
   }
 }
